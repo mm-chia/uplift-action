@@ -50,11 +50,22 @@ const queryVersion = async (version: string): Promise<GithubTag | null> => {
   } else {
     url = `https://api.github.com/repos/gembaadvantage/uplift/releases/tags/${version}`
   }
+  
   core.debug(`🌐 identified Github URL for download: ${url}`)
 
   const http = new client.HttpClient('uplift-action')
 
-  return (await http.getJson<GithubTag>(url)).result
+  // Retrieve the GITHUB_TOKEN from environment variables
+  const token = process.env.GITHUB_TOKEN
+
+  const headers: { [key: string]: string } = {}
+  if (token) {
+    // If the token is set, add the Authorization header
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  // Make the request (authenticated if token is set, otherwise unauthenticated)
+  return (await http.getJson<GithubTag>(url, headers)).result
 }
 
 const getFilename = (version: string): string => {
